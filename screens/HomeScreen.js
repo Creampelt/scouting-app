@@ -5,11 +5,14 @@ import {
   StyleSheet,
   Text,
   FlatList,
-  ScrollView,
 } from "react-native";
 import Card from '../other/Card.js';
 import Touchable from 'react-native-platform-touchable';
-import { SafeAreaView } from 'react-navigation';
+import {
+  SafeAreaView,
+  createStackNavigator,
+  createAppContainer
+} from 'react-navigation';
 import Table from '../other/Table.js';
 
 const ACCENT_COLOR = '#03b0ff';
@@ -68,49 +71,40 @@ export default class HomeScreen extends React.Component {
              ['2', 'The Missfits', '6418'],
              ['3', 'Greybots', '973'],
              ['4', 'Spartan Robotics', '971'],
-           ]} />
+           ]}
+    />
   );
 
   render() {
     const screenWidth = Dimensions.get('window').width;
+    const {navigate} = this.props.navigation;
     return (
-      <View style={{backgroundColor: '#fff'}}>
-        <SafeAreaView>
-          <View
-            style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02 }]}>
-            <Text style={styles.title}>Home</Text>
-          </View>
-          <View style={{ zIndex: 1000 }}>
-            <View style={[styles.scoutButton, {
+      <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
+        <View
+          style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02 }]}>
+          <Text style={styles.title}>Home</Text>
+          <Touchable
+            background={Touchable.Ripple(ACCENT_COLOR_DARK, true)}
+            onPress={() => navigate('Scouting')}
+            style={[styles.scoutButton, {
               left: 55,
-              backgroundColor: ACCENT_COLOR_DARK,
               width: screenWidth - 110
             }]}>
-              <Text style={[styles.scoutButtonText, {opacity: 0.5}]}>Scout a match</Text>
-            </View>
-            <Touchable
-              background={Touchable.Ripple(ACCENT_COLOR_DARK, true)}
-              onPress={() => console.log('Touchable pressed')}>
-              <View style={[styles.scoutButton, {
-                left: 55,
-                width: screenWidth - 110
-              }]}>
-                <Text style={styles.scoutButtonText}>Scout a match</Text>
-              </View>
-            </Touchable>
-          </View>
-          <FlatList
-            style={styles.container}
-            data={[
-              {key: 'Upcoming Matches', content: this.UpcomingMatches},
-              {key: 'Statistics', content: this.Statistics},
-              {key: 'Recent Matches', content: this.RecentMatches},
-              {key: 'Rankings', content: this.Rankings}
-            ]}
-            renderItem={({item}) => <Card title={item.key} content={item.content} />}
-          />
-        </SafeAreaView>
-      </View>
+            <Text style={styles.scoutButtonText}>Scout a match</Text>
+          </Touchable>
+        </View>
+        <FlatList
+          style={styles.container}
+          data={[
+            {key: 'Upcoming Matches', content: this.UpcomingMatches, handler: () => navigate('Links')},
+            {key: 'Statistics', content: this.Statistics},
+            {key: 'Recent Matches', content: this.RecentMatches},
+            {key: 'Rankings', content: this.Rankings},
+            {key: '', content: (<View></View>), style: {opacity: 0}}
+          ]}
+          renderItem={({item}) => <Card title={item.key} content={item.content} style={item.style} handler={item.handler}/>}
+        />
+      </SafeAreaView>
     );
   }
 }
@@ -121,7 +115,6 @@ const styles = StyleSheet.create({
     paddingTop: 52.5,
     paddingHorizontal: 20,
     backgroundColor: '#f0f0f0',
-    height: '100%',
   },
   header: {
     zIndex: 999,
@@ -150,7 +143,7 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     justifyContent: 'center',
     position: 'absolute',
-    top: -65 / 2,
+    bottom: -65.0/2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -158,6 +151,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    zIndex: 1000,
   },
   scoutButtonText: {
     textAlign: 'center',
