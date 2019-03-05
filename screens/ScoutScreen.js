@@ -13,6 +13,7 @@ import Touchable from "react-native-platform-touchable";
 import CardNonTouchable from "../other/CardNonTouchable.js";
 import {SafeAreaView} from "react-navigation";
 import { CheckBox } from 'react-native-elements';
+import * as firebase from 'firebase';
 
 const ACCENT_COLOR = '#03b0ff';
 const ACCENT_COLOR_DARK = '#0374b2';
@@ -20,6 +21,16 @@ const MINUS_ONE_COLOR = '#ff414c';
 const MINUS_ONE_COLOR_DARK = '#b02e36';
 const PLUS_ONE_COLOR = '#66ff64';
 const PLUS_ONE_COLOR_DARK= '#4ca84a';
+
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDlSxCXqPgjwBZTJOsstAuTdORwAf6De0E",
+  authDomain: "scouting-app-5ec8f.firebaseapp.com",
+  databaseURL: "https://scouting-app-5ec8f.firebaseio.com",
+  storageBucket: "scouting-app-5ec8f.appspot.com"
+};
+
+firebase.initializeApp(firebaseConfig);
 
 const PlusMinusMenu = ({ title, num, isHatch, handler }) => (
   <View style={{marginBottom: 7}}>
@@ -56,8 +67,24 @@ const OptionsMenu = ({ options, handler }) => options.map((option, index) => (
   />
 ));
 
-const Sandstorm = ({ hatch, cargo, handler, onSecondLevel, startingPosHandler, crossedHabLine, crossHabHandler }) => (
+function renderErrorMessage(renderError) {
+  if (renderError) return <Text style={styles.errorMessage}>Please enter a team number.</Text>
+  return null
+}
+
+const PreMatch = ({ changeText, onSecondLevel, startingPosHandler, renderError }) => (
   <View>
+    <View>
+      <Text style={styles.cardTitle}>Team Number:</Text>
+      <TextInput multiline={false}
+                 keyboardType='numeric'
+                 style={styles.textInputSingleLine}
+                 placeholder='Team number here'
+                 onEndEditing={(text) => changeText(text.nativeEvent.text)}
+                 editable={true}
+      />
+      {renderErrorMessage(renderError)}
+    </View>
     <View>
       <Text style={styles.cardTitle}>Starting Position</Text>
       <OptionsMenu options={[
@@ -65,6 +92,11 @@ const Sandstorm = ({ hatch, cargo, handler, onSecondLevel, startingPosHandler, c
         {title: 'Level 2', checked: onSecondLevel, goal: true}
       ]} handler={startingPosHandler} />
     </View>
+  </View>
+);
+
+const Sandstorm = ({ hatch, cargo, handler, crossedHabLine, crossHabHandler }) => (
+  <View>
     <CheckBox title='Crossed hab line:'
               checked={crossedHabLine}
               containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
@@ -118,7 +150,7 @@ const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
     <View>
       <Text style={styles.cardTitle}>Comments:</Text>
       <TextInput multiline={true}
-                 style={styles.textInput}
+                 style={styles.textInputMultiline}
                  placeholder='Enter comments here'
                  onEndEditing={(text) => changeText(text.nativeEvent.text)}
                  onFocus={(event) => scroll(ReactNative.findNodeHandle(event.target))}
@@ -128,7 +160,16 @@ const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
   </View>
 );
 
-export default class HomeScreen extends React.Component {
+function removeInstances(str, chars) {
+  for (let char in chars) {
+    if (chars.hasOwnProperty(char)) {
+      str = str.replace(chars[char], '');
+    }
+  }
+  return str;
+}
+
+export default class ScoutScreen extends React.Component {
   static navigationOptions = {
     header: null
   };
@@ -136,10 +177,13 @@ export default class HomeScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      pregame: {
+        onSecondLevel: false,
+        teamNumber: null,
+      },
       sandstorm: {
         hatch: 0,
         cargo: 0,
-        onSecondLevel: false,
         crossedHabLine: false,
       },
       teleop: {
@@ -153,7 +197,8 @@ export default class HomeScreen extends React.Component {
       postgame: {
         brokeDown: false,
         comments: '',
-      }
+      },
+      renderError: false,
     };
     this.sandstormHandler = this.sandstormHandler.bind(this);
     this.teleopHandler = this.teleopHandler.bind(this);
@@ -162,8 +207,9 @@ export default class HomeScreen extends React.Component {
     this.climbHandler = this.climbHandler.bind(this);
     this.buddyClimbHandler = this.buddyClimbHandler.bind(this);
     this.brokeDownHandler = this.brokeDownHandler.bind(this);
-    this.changeText = this.changeText.bind(this);
+    this.changePostgameText = this.changePostgameText.bind(this);
     this.scrollToInput = this.scrollToInput.bind(this);
+    this.changePregameText = this.changePregameText.bind(this);
   }
 
   sandstormHandler(num, plus, hatch) {
@@ -213,7 +259,7 @@ export default class HomeScreen extends React.Component {
   }
 
   startingPosHandler(goal) {
-    this.setState({sandstorm: {...this.state.sandstorm, onSecondLevel: goal}});
+    this.setState({pregame: {...this.state.pregame, onSecondLevel: goal}});
   }
 
   crossedHab(value) {
@@ -221,7 +267,6 @@ export default class HomeScreen extends React.Component {
   }
 
   climbHandler(goal) {
-    console.log(goal);
     this.setState({endgame: {...this.state.endgame, climb: goal}});
   }
 
@@ -233,13 +278,45 @@ export default class HomeScreen extends React.Component {
     this.setState({postgame: {...this.state.postgame, brokeDown: !value}});
   }
 
-  changeText(text) {
-    console.log(text);
+  changePostgameText(text) {
     this.setState({postgame: {...this.state.postgame, comments: text}});
   }
 
   scrollToInput (reactNode) {
     this.scroll.props.scrollToFocusedInput(reactNode)
+  }
+
+  changePregameText(text) {
+    this.setState({pregame: {...this.state.pregame, teamNumber: text}});
+  }
+
+  submitForm(rawData, handler) {
+    let data = {};
+    let sect;
+    let teamNumber = rawData.pregame.teamNumber;
+
+    if (rawData.pregame.teamNumber === null) {
+      this.setState({renderError: true});
+      return;
+    }
+
+    for (let section in rawData) {
+      if (rawData.hasOwnProperty(section) && section !== 'renderError') {
+        sect = rawData[section];
+        for (let scoring in sect) {
+          if (sect.hasOwnProperty(scoring) && scoring !== 'teamNumber') {
+            data[scoring] = sect[scoring];
+          }
+        }
+      }
+    }
+
+    let date = (new Date).toTimeString();
+    date = removeInstances(date, [/:/g, /\s/g, /-/g, /\./g]);
+    let url = 'matchData/' + teamNumber + '/' + date;
+    firebase.database().ref(url).set(data);
+    this.setState({renderError: false});
+    handler();
   }
 
   render() {
@@ -261,7 +338,9 @@ export default class HomeScreen extends React.Component {
           </Touchable>
           <Touchable
             background={Touchable.Ripple(ACCENT_COLOR_DARK, false)}
-            onPress={() => navigate('Home')}
+            onPress={() => {
+              this.submitForm(this.state, () => navigate('Home'));
+            }}
             style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Submit</Text>
           </Touchable>
@@ -274,12 +353,15 @@ export default class HomeScreen extends React.Component {
           style={styles.container}
           keyboardDismissMode={keyboardDismissMode}
           data={[
+            {key: 'Pre Match', content: (<PreMatch onSecondLevel={this.state.pregame.onSecondLevel}
+                                                   startingPosHandler={this.startingPosHandler}
+                                                   renderError={this.state.renderError}
+                                                   changeText={this.changePregameText} />)
+            },
             {key: 'Sandstorm', content: (<Sandstorm hatch={this.state.sandstorm.hatch}
                                                     cargo={this.state.sandstorm.cargo}
                                                     handler={this.sandstormHandler}
-                                                    onSecondLevel={this.state.sandstorm.onSecondLevel}
                                                     crossedHabLine={this.state.sandstorm.crossedHabLine}
-                                                    startingPosHandler={this.startingPosHandler}
                                                     crossHabHandler={this.crossedHab} />)
             },
             {key: 'Teleop', content: (<Teleop hatch={this.state.teleop.hatch}
@@ -294,7 +376,7 @@ export default class HomeScreen extends React.Component {
             {key: 'Post Match', content: (<PostMatch brokeDown={this.state.postgame.brokeDown}
                                                      brokeDownHandler={this.brokeDownHandler}
                                                      scroll={this.scrollToInput}
-                                                     changeText={this.changeText} />)
+                                                     changeText={this.changePostgameText} />)
             },
             {key: '', content: (<View />), style: {opacity: 0}}
           ]}
@@ -392,13 +474,27 @@ const styles = StyleSheet.create({
     margin: 0,
     padding: 5,
   },
-  textInput: {
+  textInputSingleLine: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 5,
+    fontFamily: 'open-sans',
+    fontSize: 14,
+    margin: 5,
+  },
+  textInputMultiline: {
     minHeight: 75,
     backgroundColor: '#f0f0f0',
     padding: 10,
     borderRadius: 5,
     fontFamily: 'open-sans',
     fontSize: 14,
+    margin: 5,
+  },
+  errorMessage: {
+    fontFamily: 'open-sans',
+    fontSize: 16,
+    color: MINUS_ONE_COLOR,
     margin: 5,
   }
 });
