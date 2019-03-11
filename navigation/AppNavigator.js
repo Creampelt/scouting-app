@@ -5,8 +5,10 @@ import MainTabNavigator from './MainTabNavigator';
 import LinksScreen from "../screens/LinksScreen";
 import HomeScreen from "../screens/HomeScreen";
 import ScoutScreen from "../screens/ScoutScreen";
+import LoginScreen from "../screens/LoginScreen";
 
 const MainNavigator = createStackNavigator({
+  Login: {screen: LoginScreen},
   Home: {screen: HomeScreen},
   Links: {screen: LinksScreen},
   Scouting: {screen: ScoutScreen}

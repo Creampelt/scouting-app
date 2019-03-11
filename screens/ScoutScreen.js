@@ -352,8 +352,9 @@ export default class ScoutScreen extends React.Component {
           extraHeight={150}
           style={styles.container}
           keyboardDismissMode={keyboardDismissMode}
+          keyboardShouldPersistTaps='always'
           data={[
-            {key: 'Pre Match', content: (<PreMatch onSecondLevel={this.state.pregame.onSecondLevel}
+            {key: 'Pre-Match', content: (<PreMatch onSecondLevel={this.state.pregame.onSecondLevel}
                                                    startingPosHandler={this.startingPosHandler}
                                                    renderError={this.state.renderError}
                                                    changeText={this.changePregameText} />)
