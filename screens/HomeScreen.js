@@ -7,6 +7,8 @@ import {
   FlatList,
   Platform,
   AsyncStorage,
+  RefreshControl,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../other/Card.js';
@@ -16,73 +18,22 @@ import {
   StackActions,
   NavigationActions
 } from 'react-navigation';
-import Table from '../other/Table.js';
 
 const ACCENT_COLOR = '#03b0ff';
-const ACCENT_COLOR_DARK = '#0374b2';
 
 export default class HomeScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      teamNumber: this.props.navigation.getParam('teamNumber', null)
-    }
+      teamNumber: this.props.navigation.getParam('teamNumber', null),
+      events: [],
+      refreshing: false,
+    };
   }
   static navigationOptions = {
-    header: null
+    header: null,
+    gesturesEnabled: false,
   };
-
-  UpcomingMatches = (
-    <Table headers={['Red Alliance', 'Blue Alliance', 'Time']}
-           tableData={[
-             ['254, 973, 971', '254, 973, 971', '2:30'],
-             ['254, 973, 971', '6418, 5499, 973', '2:35'],
-             ['254, 973, 971', '254, 973, 971', '2:40'],
-             ['254, 973, 971', '6418, 5499, 973', '2:45']
-           ]} />
-  );
-
-  Statistics = (
-    <View>
-      <Text>
-        <Text style={styles.cardTitle}>Top Pick: </Text>
-        <Text style={styles.cardText}>254</Text>
-      </Text>
-      <Text>
-        <Text style={styles.cardTitle}>Best Cargo Bot: </Text>
-        <Text style={styles.cardText}>973</Text>
-      </Text>
-      <Text>
-        <Text style={styles.cardTitle}>Best Hatch Bot: </Text>
-        <Text style={styles.cardText}>254</Text>
-      </Text>
-      <Text>
-        <Text style={styles.cardTitle}>Best Buddy Climb: </Text>
-        <Text style={styles.cardText}>1678</Text>
-      </Text>
-    </View>
-  );
-
-  RecentMatches = (
-    <Table headers={['Match', 'Red Alliance', 'Blue Alliance']}
-           tableData={[
-             ['Qual 4', '254, 973, 971', '254, 973, 971'],
-             ['Qual 3', '254, 973, 971', '6418, 5499, 973'],
-             ['Qual 2', '254, 973, 971', '254, 973, 971'],
-             ['Qual 1', '254, 973, 971', '6418, 5499, 973'],
-           ]} />
-  );
-
-  Rankings = (
-    <Table headers={['Rank', 'Team Name', 'Team Number']}
-           tableData={[
-             ['1', 'Cheesy Poofs', '254'],
-             ['2', 'The Missfits', '6418'],
-             ['3', 'Greybots', '973'],
-             ['4', 'Spartan Robotics', '971'],
-           ]}
-    />
-  );
 
   _removeItem = async (key) => {
     try {
@@ -97,9 +48,77 @@ export default class HomeScreen extends React.Component {
     dispatch(resetAction)
   }
 
+  _storeData = async (data) => {
+    try {
+      await AsyncStorage.setItem('selectedEvent', data);
+    } catch (error) {
+      // Error saving data
+    }
+  };
+
+  _retrieveData = async () => {
+    try {
+      return await AsyncStorage.getItem('selectedEvent');
+    } catch (error) {
+      // Error retrieving data
+    }
+  };
+
+  async getEvents() {
+    let year = (new Date()).getFullYear();
+    fetch('https://www.thebluealliance.com/api/v3/team/frc' + this.state.teamNumber + '/events/' + year, {
+      method: 'GET',
+      headers: {
+        "X-TBA-Auth-Key": "obG6uZ1OpPJxlW90yIivbojMth5LvH4iu1N4y7x3KHXHjhOl6BZ2GIusJ75VjQm8",
+      },
+    }).then((response) => {
+      let body = JSON.parse(response._bodyText);
+      body.sort((a, b) => parseFloat(a.week) - parseFloat(b.week));
+      this.setState({events: body})
+    });
+  }
+
+  EventCard = (event) => {
+    return (
+      <Card title={event.event.name} content={(
+        <View>
+          <Text style={styles.cardText}>
+            <Text style={styles.cardTitle}>Date: </Text>
+            {event.event.start_date} to {event.event.end_date}
+          </Text>
+          <Text style={styles.cardText}>
+            <Text style={styles.cardTitle}>Location: </Text>
+            {event.event.location_name}
+          </Text>
+          <Text style={styles.cardText}>
+            <Text style={styles.cardTitle}>Address: </Text>
+            {event.event.address}
+          </Text>
+        </View>
+      )} handler={() => {
+        this._storeData(JSON.stringify(event.event));
+        this.props.navigation.navigate('Event', {event: event.event, teamNumber: this.state.teamNumber})
+      }}/>
+    )};
+
+  _onRefresh = () => {
+    this.setState({refreshing: true});
+    this.getEvents().then(() => this.setState({refreshing: false}));
+  };
+
+  componentDidMount() {
+    this.getEvents();
+    let navigate = this.props.navigation.navigate;
+    let teamNumber = this.state.teamNumber
+    this._retrieveData().then(function(selectedEvent) {
+      if (selectedEvent !== null) {
+        navigate('Event', {event: JSON.parse(selectedEvent), teamNumber: teamNumber});
+      }
+    });
+  }
+
   render() {
     const screenWidth = Dimensions.get('window').width;
-    const {navigate} = this.props.navigation;
     const resetAction = StackActions.reset({
       index: 0,
       actions: [
@@ -107,6 +126,33 @@ export default class HomeScreen extends React.Component {
       ],
     });
 
+    let content = (
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={this.state.refreshing}
+            onRefresh={this._onRefresh}
+          />
+        }>
+        <Text style={[styles.cardText, {textAlign: 'center'}]}>There are no events to display</Text>
+      </ScrollView>
+    );
+    if (this.state.events.length > 0) {
+      content = (
+        <FlatList
+          style={styles.container}
+          data={this.state.events}
+          renderItem={({item}) => <this.EventCard event={item} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={this.state.refreshing}
+              onRefresh={this._onRefresh}
+            />
+          }
+        />
+      )
+    }
     return (
       <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
         <View style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02 }]}>
@@ -119,24 +165,9 @@ export default class HomeScreen extends React.Component {
                 : 'md-log-out'
             } size={30} color='#000' />
           </Touchable>
-          <Text style={styles.title}>Home</Text>
-          <Touchable background={Touchable.Ripple(ACCENT_COLOR_DARK, true)}
-                     onPress={() => navigate('Scouting')}
-                     style={[styles.scoutButton, {left: 55, width: screenWidth - 110}]}>
-            <Text style={styles.scoutButtonText}>Scout a match</Text>
-          </Touchable>
+          <Text style={styles.title}>Events</Text>
         </View>
-        <FlatList
-          style={styles.container}
-          data={[
-            {key: 'Upcoming Matches', content: this.UpcomingMatches, handler: () => navigate('Links')},
-            {key: 'Statistics', content: this.Statistics},
-            {key: 'Recent Matches', content: this.RecentMatches},
-            {key: 'Rankings', content: this.Rankings},
-            {key: '', content: (<View />), style: {opacity: 0}}
-          ]}
-          renderItem={({item}) => <Card title={item.key} content={item.content} style={item.style} handler={item.handler}/>}
-        />
+        {content}
       </SafeAreaView>
     );
   }
@@ -145,9 +176,10 @@ export default class HomeScreen extends React.Component {
 // TODO: Add box shadow for android (shadow props only support iOS)
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 52.5,
-    paddingHorizontal: 20,
+    padding: 20,
     backgroundColor: '#f0f0f0',
+    flex: 1,
+    alignContent: 'center',
   },
   header: {
     zIndex: 999,
@@ -164,7 +196,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'open-sans-bold',
     fontSize: 20,
-    marginBottom: 35,
+    marginBottom: 15,
     marginLeft: 'auto',
     marginRight: 'auto',
   },
@@ -201,7 +233,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   logOutButton: {
-    paddingRight: 15,
+    position: 'absolute',
+    left: 25,
+    top: 5,
     transform: [
       {rotateY: '180deg'}
     ]

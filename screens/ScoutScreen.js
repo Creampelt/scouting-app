@@ -6,12 +6,13 @@ import {
   View,
   TextInput,
   Platform,
+  Slider,
 } from "react-native";
 import ReactNative from 'react-native';
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
 import Touchable from "react-native-platform-touchable";
 import CardNonTouchable from "../other/CardNonTouchable.js";
-import {SafeAreaView} from "react-navigation";
+import { SafeAreaView } from "react-navigation";
 import { CheckBox } from 'react-native-elements';
 import * as firebase from 'firebase';
 
@@ -22,38 +23,42 @@ const MINUS_ONE_COLOR_DARK = '#b02e36';
 const PLUS_ONE_COLOR = '#66ff64';
 const PLUS_ONE_COLOR_DARK= '#4ca84a';
 
-// Initialize Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDlSxCXqPgjwBZTJOsstAuTdORwAf6De0E",
-  authDomain: "scouting-app-5ec8f.firebaseapp.com",
-  databaseURL: "https://scouting-app-5ec8f.firebaseio.com",
-  storageBucket: "scouting-app-5ec8f.appspot.com"
-};
+const PlusMinusMenu = ({ title, num, isHatch, handlers }) => {
+  let displayNum = num;
+  let buttons = handlers.map((handler, i) => {
+    let stateNum = num;
+    if (typeof(num) === "object")
+      stateNum = (isHatch ? num[`rocketHatchLevel${3 - i}`] : num[`rocketCargoLevel${3 - i}`]);
+    return (
+      <View style={{flexDirection: 'row', marginBottom: 7}} key={i}>
+        <Touchable
+          background={Touchable.Ripple(MINUS_ONE_COLOR_DARK, false)}
+          onPress={() => handler(stateNum, false, isHatch)}
+          style={styles.minusOne}>
+          <Text style={styles.cardText}>-1</Text>
+        </Touchable>
+        <Touchable
+          background={Touchable.Ripple(PLUS_ONE_COLOR_DARK, false)}
+          onPress={() => handler(stateNum, true, isHatch)}
+          style={styles.plusOne}>
+          <Text style={styles.cardText}>+1</Text>
+        </Touchable>
+      </View>
+  )});
 
-firebase.initializeApp(firebaseConfig);
+  if (typeof(num) === "object")
+    displayNum = Object.values(num).reduce((a, b) => a + b);
 
-const PlusMinusMenu = ({ title, num, isHatch, handler }) => (
-  <View style={{marginBottom: 7}}>
-    <Text style={{marginBottom: 5, marginHorizontal: 5}}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.cardTextSecondary}>   {num}</Text>
-    </Text>
-    <View style={{flexDirection: 'row'}}>
-      <Touchable
-        background={Touchable.Ripple(MINUS_ONE_COLOR_DARK, false)}
-        onPress={() => handler(num, false, isHatch)}
-        style={styles.minusOne}>
-        <Text style={styles.cardText}>-1</Text>
-      </Touchable>
-      <Touchable
-        background={Touchable.Ripple(PLUS_ONE_COLOR_DARK, false)}
-        onPress={() => handler(num, true, isHatch)}
-        style={styles.plusOne}>
-        <Text style={styles.cardText}>+1</Text>
-      </Touchable>
+  return (
+    <View style={{marginBottom: 7}}>
+      <Text style={{marginBottom: 5, marginHorizontal: 5}}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardTextSecondary}>   {displayNum}</Text>
+      </Text>
+      {buttons}
     </View>
-  </View>
-);
+  )
+};
 
 const OptionsMenu = ({ options, handler }) => options.map((option, index) => (
   <CheckBox
@@ -67,36 +72,62 @@ const OptionsMenu = ({ options, handler }) => options.map((option, index) => (
   />
 ));
 
-function renderErrorMessage(renderError) {
-  if (renderError) return <Text style={styles.errorMessage}>Please enter a team number.</Text>
+const TimerButton = ({ time, handler }) => {
+  let startTime = null;
+  return (
+    <View style={{marginBottom: 7}}>
+      <Text style={{marginBottom: 5, marginHorizontal: 5}}>
+        <Text style={styles.cardTitle}>Climb Time</Text>
+        <Text style={styles.cardTextSecondary}>   {time}</Text>
+      </Text>
+      <Touchable
+        background={Touchable.Ripple(ACCENT_COLOR_DARK, false)}
+        onPressIn={() => startTime = new Date()}
+        onPressOut={() => handler(startTime)}
+        style={styles.timerButton}>
+        <Text style={styles.cardText}>Hold to start timing</Text>
+      </Touchable>
+    </View>
+  )
+};
+
+function renderErrorMessage(renderError, team) {
+  if (renderError) return <Text style={styles.errorMessage}>Please enter a {(team ? 'team' : 'match')} number.</Text>;
   return null
 }
 
-const PreMatch = ({ changeText, onSecondLevel, startingPosHandler, renderError }) => (
+const PreMatch = ({ changeTeamNumber, startingLevel, startingPosHandler, renderTeamError, renderMatchError,
+                    crossedHabLine, crossHabHandler, changeMatchNumber }) => (
   <View>
+    <View>
+      <Text style={styles.cardTitle}>Match Number:</Text>
+      <TextInput multiline={false}
+                 keyboardType='numeric'
+                 style={styles.textInputSingleLine}
+                 placeholder='Match number here'
+                 onChange={(text) => changeMatchNumber(text.nativeEvent.text)}
+                 editable={true}
+      />
+      {renderErrorMessage(renderMatchError, false)}
+    </View>
     <View>
       <Text style={styles.cardTitle}>Team Number:</Text>
       <TextInput multiline={false}
                  keyboardType='numeric'
                  style={styles.textInputSingleLine}
                  placeholder='Team number here'
-                 onEndEditing={(text) => changeText(text.nativeEvent.text)}
+                 onChange={(text) => changeTeamNumber(text.nativeEvent.text)}
                  editable={true}
       />
-      {renderErrorMessage(renderError)}
+      {renderErrorMessage(renderTeamError, true)}
     </View>
     <View>
       <Text style={styles.cardTitle}>Starting Position</Text>
       <OptionsMenu options={[
-        {title: 'Level 1', checked: !onSecondLevel, goal: false},
-        {title: 'Level 2', checked: onSecondLevel, goal: true}
+        {title: 'Level 1', checked: startingLevel === 1, goal: 1},
+        {title: 'Level 2', checked: startingLevel === 2, goal: 2}
       ]} handler={startingPosHandler} />
     </View>
-  </View>
-);
-
-const Sandstorm = ({ hatch, cargo, handler, crossedHabLine, crossHabHandler }) => (
-  <View>
     <CheckBox title='Crossed hab line:'
               checked={crossedHabLine}
               containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
@@ -104,21 +135,27 @@ const Sandstorm = ({ hatch, cargo, handler, crossedHabLine, crossHabHandler }) =
               iconRight
               onPress={() => crossHabHandler(crossedHabLine)}
     />
-    <PlusMinusMenu title="Hatch" num={hatch} isHatch={true} handler={handler} />
-    <PlusMinusMenu title="Cargo" num={cargo} isHatch={false} handler={handler} />
   </View>
 );
 
-const Teleop = ({ hatch, cargo, handler }) => (
+const CargoShip = ({ hatch, cargo, handler }) => (
   <View>
-    <PlusMinusMenu title="Hatch" num={hatch} isHatch={true} handler={handler} />
-    <PlusMinusMenu title="Cargo" num={cargo} isHatch={false} handler={handler} />
+    <PlusMinusMenu title="Hatch" num={hatch} isHatch={true} handlers={handler} />
+    <PlusMinusMenu title="Cargo" num={cargo} isHatch={false} handlers={handler} />
   </View>
 );
 
-const EndGame = ({ level, climbHandler, buddyClimb, buddyClimbHandler  }) => (
+const Rocket = ({ hatch, cargo, handlers }) => (
+  <View>
+    <PlusMinusMenu title="Hatch" num={hatch} isHatch={true} handlers={handlers} />
+    <PlusMinusMenu title="Cargo" num={cargo} isHatch={false} handlers={handlers} />
+  </View>
+);
+
+const EndGame = ({ level, climbHandler, buddyClimb, buddyClimbHandler, time, timerHandler }) => (
   <View>
     <View>
+      <TimerButton time={time} handler={timerHandler} />
       <Text style={styles.cardTitle}>Hab Climb</Text>
       <OptionsMenu options={[
         {title: 'None', checked: level === 0, goal: 0},
@@ -152,11 +189,30 @@ const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
       <TextInput multiline={true}
                  style={styles.textInputMultiline}
                  placeholder='Enter comments here'
-                 onEndEditing={(text) => changeText(text.nativeEvent.text)}
+                 onChange={(text) => changeText(text.nativeEvent.text)}
                  onFocus={(event) => scroll(ReactNative.findNodeHandle(event.target))}
                  editable={true}
       />
     </View>
+  </View>
+);
+
+const Defense = ({ max, min, sliderHandler, checkedHandler, playedDefense, effectiveness }) => (
+  <View>
+    <CheckBox title='Robot played defense:'
+              checked={playedDefense}
+              containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
+              textStyle={[styles.cardTitle, {marginLeft: 0, paddingLeft: 0}]}
+              iconRight
+              onPress={() => checkedHandler(playedDefense)}
+    />
+    <Text style={styles.cardTitle}>Effectiveness of defense:</Text>
+    <Slider minimumValue={min}
+            maximumValue={max}
+            onValueChange={sliderHandler}
+            value={effectiveness}
+            step={1}
+    />
   </View>
 );
 
@@ -178,30 +234,49 @@ export default class ScoutScreen extends React.Component {
     super(props);
     this.state = {
       pregame: {
-        onSecondLevel: false,
+        matchNumber: null,
+        startingLevel: 1,
         teamNumber: null,
-      },
-      sandstorm: {
-        hatch: 0,
-        cargo: 0,
         crossedHabLine: false,
       },
-      teleop: {
-        hatch: 0,
-        cargo: 0,
+      cargoShip: {
+        cargoShipHatch: 0,
+        cargoShipCargo: 0,
+      },
+      rocket: {
+        hatch: {
+          rocketHatchLevel1: 0,
+          rocketHatchLevel2: 0,
+          rocketHatchLevel3: 0,
+        },
+        cargo: {
+          rocketCargoLevel1: 0,
+          rocketCargoLevel2: 0,
+          rocketCargoLevel3: 0,
+        }
+      },
+      defense: {
+        playedDefense: false,
+        defenseEffectiveness: 0,
       },
       endgame: {
-        climb: 0,
+        habClimb: 0,
         buddyClimb: 0,
+        climbDuration: 0
       },
       postgame: {
-        brokeDown: false,
+        robotBrokeDown: false,
         comments: '',
       },
-      renderError: false,
+      renderTeamError: false,
+      renderMatchError: false,
+      teamNumber: this.props.navigation.getParam('teamNumber', ''),
+      event: this.props.navigation.getParam('event', null),
     };
-    this.sandstormHandler = this.sandstormHandler.bind(this);
-    this.teleopHandler = this.teleopHandler.bind(this);
+    this.cargoShipHandler = this.cargoShipHandler.bind(this);
+    this.rocketLvl1 = this.rocketLvl1.bind(this);
+    this.rocketLvl2 = this.rocketLvl2.bind(this);
+    this.rocketLvl3 = this.rocketLvl3.bind(this);
     this.startingPosHandler = this.startingPosHandler.bind(this);
     this.crossedHab = this.crossedHab.bind(this);
     this.climbHandler = this.climbHandler.bind(this);
@@ -209,65 +284,129 @@ export default class ScoutScreen extends React.Component {
     this.brokeDownHandler = this.brokeDownHandler.bind(this);
     this.changePostgameText = this.changePostgameText.bind(this);
     this.scrollToInput = this.scrollToInput.bind(this);
-    this.changePregameText = this.changePregameText.bind(this);
+    this.changeTeamNumberText = this.changeTeamNumberText.bind(this);
+    this.playedDefenseHandler = this.playedDefenseHandler.bind(this);
+    this.effectivenessHandler = this.effectivenessHandler.bind(this);
+    this.changeMatchNumberText = this.changeMatchNumberText.bind(this);
+    this.timerHandler = this.timerHandler.bind(this);
   }
 
-  sandstormHandler(num, plus, hatch) {
+  cargoShipHandler(num, plus, hatch) {
     let stateNum = num;
-    if (plus) stateNum += 1;
-    else if (stateNum > 0) stateNum -= 1;
-    else stateNum = 0;
+    if (plus && stateNum < 8) stateNum += 1;
+    else if (!plus && stateNum > 0) stateNum -= 1;
 
     if (hatch) {
       this.setState({
-        sandstorm: {
-          ...this.state.sandstorm,
-          hatch: stateNum,
+        cargoShip: {
+          ...this.state.cargoShip,
+          cargoShipHatch: stateNum,
         }
       })
     } else {
       this.setState({
-        sandstorm: {
-          ...this.state.sandstorm,
-          cargo: stateNum
+        cargoShip: {
+          ...this.state.cargoShip,
+          cargoShipCargo: stateNum
         }
       })
     }
   }
 
-  teleopHandler(num, plus, hatch) {
+  rocketLvl1(num, plus, hatch) {
     let stateNum = num;
-    if (plus) stateNum += 1;
-    else if (stateNum > 0) stateNum -= 1;
-    else stateNum = 0;
+    if (plus && stateNum < 4) stateNum += 1;
+    else if (!plus && stateNum > 0) stateNum -= 1;
 
     if (hatch) {
       this.setState({
-        teleop: {
-          ...this.state.teleop,
-          hatch: stateNum,
+        rocket: {
+          ...this.state.rocket,
+          hatch: {
+            ...this.state.rocket.hatch,
+            rocketHatchLevel1: stateNum
+          }
         }
       })
     } else {
       this.setState({
-        teleop: {
-          ...this.state.teleop,
-          cargo: stateNum
+        rocket: {
+          ...this.state.rocket,
+          cargo: {
+            ...this.state.rocket.cargo,
+            rocketCargoLevel1: stateNum
+          }
+        }
+      })
+    }
+  }
+
+  rocketLvl2(num, plus, hatch) {
+    let stateNum = num;
+    if (plus && stateNum < 4) stateNum += 1;
+    else if (!plus && stateNum > 0) stateNum -= 1;
+
+    if (hatch) {
+      this.setState({
+        rocket: {
+          ...this.state.rocket,
+          hatch: {
+            ...this.state.rocket.hatch,
+            rocketHatchLevel2: stateNum
+          }
+        }
+      })
+    } else {
+      this.setState({
+        rocket: {
+          ...this.state.rocket,
+          cargo: {
+            ...this.state.rocket.cargo,
+            rocketCargoLevel2: stateNum
+          }
+        }
+      })
+    }
+  }
+
+  rocketLvl3(num, plus, hatch) {
+    let stateNum = num;
+    if (plus && stateNum < 4) stateNum += 1;
+    else if (!plus && stateNum > 0) stateNum -= 1;
+
+    if (hatch) {
+      this.setState({
+        rocket: {
+          ...this.state.rocket,
+          hatch: {
+            ...this.state.rocket.hatch,
+            rocketHatchLevel3: stateNum
+          }
+        }
+      })
+    } else {
+      this.setState({
+        rocket: {
+          ...this.state.rocket,
+          cargo: {
+            ...this.state.rocket.cargo,
+            rocketCargoLevel3: stateNum
+          }
         }
       })
     }
   }
 
   startingPosHandler(goal) {
-    this.setState({pregame: {...this.state.pregame, onSecondLevel: goal}});
+    this.setState({pregame: {...this.state.pregame, startingLevel: goal}});
   }
 
   crossedHab(value) {
-    this.setState({sandstorm: {...this.state.sandstorm, crossedHabLine: !value}})
+    this.setState({pregame: {...this.state.pregame, crossedHabLine: !value}})
   }
 
   climbHandler(goal) {
-    this.setState({endgame: {...this.state.endgame, climb: goal}});
+    this.setState({endgame: {...this.state.endgame, habClimb: goal}});
   }
 
   buddyClimbHandler(goal) {
@@ -275,7 +414,7 @@ export default class ScoutScreen extends React.Component {
   }
 
   brokeDownHandler(value) {
-    this.setState({postgame: {...this.state.postgame, brokeDown: !value}});
+    this.setState({postgame: {...this.state.postgame, robotBrokeDown: !value}});
   }
 
   changePostgameText(text) {
@@ -286,34 +425,64 @@ export default class ScoutScreen extends React.Component {
     this.scroll.props.scrollToFocusedInput(reactNode)
   }
 
-  changePregameText(text) {
+  changeTeamNumberText(text) {
     this.setState({pregame: {...this.state.pregame, teamNumber: text}});
+  }
+
+  changeMatchNumberText(text) {
+    this.setState({pregame: {...this.state.pregame, matchNumber: text}});
+  }
+
+  playedDefenseHandler(value) {
+    this.setState({
+      defense: {
+        ...this.state.defense,
+        playedDefense: !value,
+        defenseEffectiveness: 0,
+      }
+    });
+  }
+
+  effectivenessHandler(value) {
+    this.setState({
+      defense: {
+        ...this.state.defense,
+        playedDefense: true,
+        defenseEffectiveness: value
+      }
+    });
+  }
+
+  timerHandler(startTime) {
+    let endTime = new Date();
+    let duration = Math.round((endTime - startTime) / 1000);
+    this.setState({endgame: {...this.state.endgame, climbDuration: duration}})
   }
 
   submitForm(rawData, handler) {
     let data = {};
-    let sect;
     let teamNumber = rawData.pregame.teamNumber;
+    let exclude = ['renderTeamError', 'renderMatchError', 'teamNumber', 'event'];
+    let error = false;
 
     if (rawData.pregame.teamNumber === null) {
-      this.setState({renderError: true});
-      return;
+      this.setState({renderTeamError: true});
+      error = true;
     }
+
+    if (rawData.pregame.matchNumber === null) {
+      this.setState({renderMatchError: true});
+      error = true;
+    }
+
+    if (error) return;
 
     for (let section in rawData) {
-      if (rawData.hasOwnProperty(section) && section !== 'renderError') {
-        sect = rawData[section];
-        for (let scoring in sect) {
-          if (sect.hasOwnProperty(scoring) && scoring !== 'teamNumber') {
-            data[scoring] = sect[scoring];
-          }
-        }
-      }
+      if (rawData.hasOwnProperty(section) && !exclude.includes(section))
+        data[section] = rawData[section];
     }
 
-    let date = (new Date).toTimeString();
-    date = removeInstances(date, [/:/g, /\s/g, /-/g, /\./g]);
-    let url = 'matchData/' + teamNumber + '/' + date;
+    let url = this.state.teamNumber + '/' + this.state.event.name + '/matchData/' + teamNumber + '/' + this.state.pregame.matchNumber;
     firebase.database().ref(url).set(data);
     this.setState({renderError: false});
     handler();
@@ -321,10 +490,10 @@ export default class ScoutScreen extends React.Component {
 
   render() {
     const screenWidth = Dimensions.get('window').width;
-    const {navigate} = this.props.navigation;
     let keyboardDismissMode;
     if (Platform.OS === 'ios') keyboardDismissMode = 'interactive';
     else keyboardDismissMode = 'on-drag';
+
     return (
       <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
         <View
@@ -332,14 +501,14 @@ export default class ScoutScreen extends React.Component {
           <Text style={styles.title}>Scout a Match</Text>
           <Touchable
             background={Touchable.Ripple('#f0f0f0', false)}
-            onPress={() => navigate('Home')}
+            onPress={() => this.props.navigation.pop()}
             style={styles.cancelButton}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </Touchable>
           <Touchable
             background={Touchable.Ripple(ACCENT_COLOR_DARK, false)}
             onPress={() => {
-              this.submitForm(this.state, () => navigate('Home'));
+              this.submitForm(this.state, () => this.props.navigation.pop());
             }}
             style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Submit</Text>
@@ -354,27 +523,37 @@ export default class ScoutScreen extends React.Component {
           keyboardDismissMode={keyboardDismissMode}
           keyboardShouldPersistTaps='always'
           data={[
-            {key: 'Pre-Match', content: (<PreMatch onSecondLevel={this.state.pregame.onSecondLevel}
-                                                   startingPosHandler={this.startingPosHandler}
-                                                   renderError={this.state.renderError}
-                                                   changeText={this.changePregameText} />)
+            {key: 'Pre-Match/Sandstorm', content: (<PreMatch startingLevel={this.state.pregame.startingLevel}
+                                                             startingPosHandler={this.startingPosHandler}
+                                                             renderMatchError={this.state.renderMatchError}
+                                                             renderTeamError={this.state.renderTeamError}
+                                                             crossedHabLine={this.state.pregame.crossedHabLine}
+                                                             crossHabHandler={this.crossedHab}
+                                                             changeMatchNumber={this.changeMatchNumberText}
+                                                             changeTeamNumber={this.changeTeamNumberText} />)
             },
-            {key: 'Sandstorm', content: (<Sandstorm hatch={this.state.sandstorm.hatch}
-                                                    cargo={this.state.sandstorm.cargo}
-                                                    handler={this.sandstormHandler}
-                                                    crossedHabLine={this.state.sandstorm.crossedHabLine}
-                                                    crossHabHandler={this.crossedHab} />)
+            {key: 'Cargo Ship', content: (<CargoShip hatch={this.state.cargoShip.cargoShipHatch}
+                                                    cargo={this.state.cargoShip.cargoShipCargo}
+                                                    handler={[this.cargoShipHandler]} />)
             },
-            {key: 'Teleop', content: (<Teleop hatch={this.state.teleop.hatch}
-                                              cargo={this.state.teleop.cargo}
-                                              handler={this.teleopHandler} />)
+            {key: 'Rocket', content: (<Rocket hatch={this.state.rocket.hatch}
+                                              cargo={this.state.rocket.cargo}
+                                              handlers={[this.rocketLvl3, this.rocketLvl2, this.rocketLvl1]} />)
             },
-            {key: 'End Game', content: (<EndGame level={this.state.endgame.climb}
+            {key: 'Defense', content: (<Defense checkedHandler={this.playedDefenseHandler}
+                                                sliderHandler={this.effectivenessHandler}
+                                                playedDefense={this.state.defense.playedDefense}
+                                                effectiveness={this.state.defense.defenseEffectiveness}
+                                                min={0}
+                                                max={10} />)},
+            {key: 'End Game', content: (<EndGame level={this.state.endgame.habClimb}
                                                  climbHandler={this.climbHandler}
+                                                 time={this.state.endgame.climbDuration}
+                                                 timerHandler={this.timerHandler}
                                                  buddyClimb={this.state.endgame.buddyClimb}
                                                  buddyClimbHandler={this.buddyClimbHandler} />)
             },
-            {key: 'Post Match', content: (<PostMatch brokeDown={this.state.postgame.brokeDown}
+            {key: 'Post Match', content: (<PostMatch brokeDown={this.state.postgame.robotBrokeDown}
                                                      brokeDownHandler={this.brokeDownHandler}
                                                      scroll={this.scrollToInput}
                                                      changeText={this.changePostgameText} />)
@@ -497,5 +676,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MINUS_ONE_COLOR,
     margin: 5,
+  },
+  timerButton: {
+    flex: 1,
+    backgroundColor: ACCENT_COLOR,
+    alignItems: 'center',
+    padding: 10,
+    marginHorizontal: 5,
+    borderRadius: 5
   }
 });
