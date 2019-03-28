@@ -7,13 +7,12 @@ import {
   Text,
   TextInput,
   TouchableWithoutFeedback,
+  TouchableOpacity,
   View
 } from "react-native";
-import Touchable from 'react-native-platform-touchable';
 import {NavigationActions, SafeAreaView, StackActions} from 'react-navigation';
 
 const ACCENT_COLOR = '#03b0ff';
-const ACCENT_COLOR_DARK = '#0374b2';
 
 function renderErrorMessage(renderError) {
   if (renderError) return <Text style={styles.errorMessage}>Please enter a valid team number.</Text>;
@@ -21,7 +20,7 @@ function renderErrorMessage(renderError) {
 }
 
 const resetAction = (teamNumber) => StackActions.reset({
-  index: 0, // <-- current active route from actions array
+  index: 0,
   actions: [
     NavigationActions.navigate({routeName: 'Home', params: {teamNumber: teamNumber}}),
   ],
@@ -57,6 +56,7 @@ export default class LoginScreen extends React.Component {
   }
 
   _storeData = async (data) => {
+    console.log('data', data);
     try {
       await AsyncStorage.setItem('teamNumber', data);
     } catch (error) {
@@ -85,7 +85,6 @@ export default class LoginScreen extends React.Component {
 
   render() {
     const screenWidth = Dimensions.get('window').width;
-
     return (
       <SafeAreaView style={styles.container}>
         <TouchableWithoutFeedback style={{flex: 1}} onPress={Keyboard.dismiss} accessible={false}>
@@ -97,12 +96,11 @@ export default class LoginScreen extends React.Component {
                        onChange={(text) => this.editInput(text.nativeEvent.text)}
                        placeholder="Team number" />
             {renderErrorMessage(this.state.renderError)}
-            <Touchable
-              background={Touchable.Ripple(ACCENT_COLOR_DARK, true)}
+            <TouchableOpacity
               onPress={() => this.logIn(this.state.teamNumber, this.props.navigation.dispatch, resetAction(this.state.teamNumber))}
               style={[styles.loginButton, {width: screenWidth - 2 * styles.container.padding}]}>
               <Text style={styles.loginButtonText}>Log in</Text>
-            </Touchable>
+            </TouchableOpacity>
           </View>
         </TouchableWithoutFeedback>
       </SafeAreaView>

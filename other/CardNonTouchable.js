@@ -2,9 +2,10 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  Text,
+  Text, Platform,
 } from "react-native";
 
+const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 export default class CardNonTouchable extends React.Component {
   render() {
@@ -31,17 +32,18 @@ const styles = StyleSheet.create({
       height: 2
     },
     shadowOpacity: 0.1,
+    elevation: 3,
     borderRadius: 4,
     shadowRadius: 4,
     marginBottom: 20
   },
   title: {
     fontFamily: 'open-sans-bold',
-    fontSize: 18,
+    fontSize: 18 * FONT_MULTIPLIER,
     marginBottom: 5,
   },
   bold: {
     fontFamily: 'open-sans-bold',
-    fontSize: 14,
+    fontSize: 14 * FONT_MULTIPLIER,
   }
 });

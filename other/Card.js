@@ -3,21 +3,21 @@ import {
   View,
   StyleSheet,
   Text,
+  TouchableOpacity, Platform
 } from "react-native";
-import Touchable from 'react-native-platform-touchable';
 
+const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 export default class Card extends React.Component {
   render() {
     return (
-      <Touchable background={Touchable.Ripple('#bb9834', true)}
-                 onPress={this.props.handler}
-                 style={[styles.cardContainer, this.props.style]}>
+      <TouchableOpacity onPress={this.props.handler}
+                        style={[styles.cardContainer, this.props.style]}>
         <View>
           <Text style={styles.title}>{this.props.title}</Text>
           {this.props.content}
         </View>
-      </Touchable>
+      </TouchableOpacity>
     );
   }
 }
@@ -34,17 +34,18 @@ const styles = StyleSheet.create({
       height: 2
     },
     shadowOpacity: 0.1,
+    elevation: 3,
     borderRadius: 4,
     shadowRadius: 4,
     marginBottom: 20
   },
   title: {
     fontFamily: 'open-sans-bold',
-    fontSize: 18,
+    fontSize: 18 * FONT_MULTIPLIER,
     marginBottom: 5,
   },
   bold: {
     fontFamily: 'open-sans-bold',
-    fontSize: 14,
+    fontSize: 14 * FONT_MULTIPLIER,
   }
 });

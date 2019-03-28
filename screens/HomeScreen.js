@@ -9,10 +9,10 @@ import {
   AsyncStorage,
   RefreshControl,
   ScrollView,
+  TouchableOpacity
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../other/Card.js';
-import Touchable from 'react-native-platform-touchable';
 import {
   SafeAreaView,
   StackActions,
@@ -20,6 +20,7 @@ import {
 } from 'react-navigation';
 
 const ACCENT_COLOR = '#03b0ff';
+const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 export default class HomeScreen extends React.Component {
   constructor(props) {
@@ -109,7 +110,7 @@ export default class HomeScreen extends React.Component {
   componentDidMount() {
     this.getEvents();
     let navigate = this.props.navigation.navigate;
-    let teamNumber = this.state.teamNumber
+    let teamNumber = this.state.teamNumber;
     this._retrieveData().then(function(selectedEvent) {
       if (selectedEvent !== null) {
         navigate('Event', {event: JSON.parse(selectedEvent), teamNumber: teamNumber});
@@ -128,7 +129,7 @@ export default class HomeScreen extends React.Component {
 
     let content = (
       <ScrollView
-        style={styles.container}
+        contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl
             refreshing={this.state.refreshing}
@@ -141,7 +142,7 @@ export default class HomeScreen extends React.Component {
     if (this.state.events.length > 0) {
       content = (
         <FlatList
-          style={styles.container}
+          contentContainerStyle={styles.container}
           data={this.state.events}
           renderItem={({item}) => <this.EventCard event={item} />}
           refreshControl={
@@ -155,16 +156,16 @@ export default class HomeScreen extends React.Component {
     }
     return (
       <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
-        <View style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02 }]}>
-          <Touchable background={Touchable.Ripple('#a0a0a0', false)}
-                     onPress={() => this.logOut(this.props.navigation.dispatch, resetAction)}
-                     style={styles.logOutButton}>
+        <View style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02,
+          paddingTop: (Platform.OS !== 'ios' ? 25 : screenWidth * 0.02) }]}>
+          <TouchableOpacity onPress={() => this.logOut(this.props.navigation.dispatch, resetAction)}
+                            style={styles.logOutButton}>
             <Ionicons name={
               Platform.OS === 'ios'
                 ? 'ios-log-out'
                 : 'md-log-out'
             } size={30} color='#000' />
-          </Touchable>
+          </TouchableOpacity>
           <Text style={styles.title}>Events</Text>
         </View>
         {content}
@@ -192,52 +193,35 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 10,
   },
   title: {
     fontFamily: 'open-sans-bold',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
     marginBottom: 15,
     marginLeft: 'auto',
     marginRight: 'auto',
   },
-  scoutButton: {
-    backgroundColor: ACCENT_COLOR,
-    width: 100,
-    height: 65,
-    borderRadius: 75 / 2,
-    alignContent: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    bottom: -65.0/2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 5
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    zIndex: 1000,
-  },
   scoutButtonText: {
     textAlign: 'center',
     color: '#fff',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
     fontFamily: 'open-sans-extra-bold',
   },
   cardTitle: {
     fontFamily: 'open-sans-bold',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
   },
   cardText: {
     fontFamily: 'open-sans',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
   },
   logOutButton: {
     position: 'absolute',
     left: 25,
-    top: 5,
+    top: (Platform.OS !== "ios" ? 25 : 5),
     transform: [
-      {rotateY: '180deg'}
+      {scaleX: -1}
     ]
   }
 });

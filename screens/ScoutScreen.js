@@ -7,21 +7,19 @@ import {
   TextInput,
   Platform,
   Slider,
+  TouchableOpacity,
 } from "react-native";
 import ReactNative from 'react-native';
 import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
-import Touchable from "react-native-platform-touchable";
 import CardNonTouchable from "../other/CardNonTouchable.js";
 import { SafeAreaView } from "react-navigation";
 import { CheckBox } from 'react-native-elements';
 import * as firebase from 'firebase';
 
 const ACCENT_COLOR = '#03b0ff';
-const ACCENT_COLOR_DARK = '#0374b2';
 const MINUS_ONE_COLOR = '#ff414c';
-const MINUS_ONE_COLOR_DARK = '#b02e36';
 const PLUS_ONE_COLOR = '#66ff64';
-const PLUS_ONE_COLOR_DARK= '#4ca84a';
+const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 const PlusMinusMenu = ({ title, num, isHatch, handlers }) => {
   let displayNum = num;
@@ -31,18 +29,16 @@ const PlusMinusMenu = ({ title, num, isHatch, handlers }) => {
       stateNum = (isHatch ? num[`rocketHatchLevel${3 - i}`] : num[`rocketCargoLevel${3 - i}`]);
     return (
       <View style={{flexDirection: 'row', marginBottom: 7}} key={i}>
-        <Touchable
-          background={Touchable.Ripple(MINUS_ONE_COLOR_DARK, false)}
+        <TouchableOpacity
           onPress={() => handler(stateNum, false, isHatch)}
           style={styles.minusOne}>
           <Text style={styles.cardText}>-1</Text>
-        </Touchable>
-        <Touchable
-          background={Touchable.Ripple(PLUS_ONE_COLOR_DARK, false)}
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={() => handler(stateNum, true, isHatch)}
           style={styles.plusOne}>
           <Text style={styles.cardText}>+1</Text>
-        </Touchable>
+        </TouchableOpacity>
       </View>
   )});
 
@@ -80,13 +76,12 @@ const TimerButton = ({ time, handler }) => {
         <Text style={styles.cardTitle}>Climb Time</Text>
         <Text style={styles.cardTextSecondary}>   {time}</Text>
       </Text>
-      <Touchable
-        background={Touchable.Ripple(ACCENT_COLOR_DARK, false)}
+      <TouchableOpacity
         onPressIn={() => startTime = new Date()}
         onPressOut={() => handler(startTime)}
         style={styles.timerButton}>
         <Text style={styles.cardText}>Hold to start timing</Text>
-      </Touchable>
+      </TouchableOpacity>
     </View>
   )
 };
@@ -499,20 +494,18 @@ export default class ScoutScreen extends React.Component {
         <View
           style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02, paddingHorizontal: 25 }]}>
           <Text style={styles.title}>Scout a Match</Text>
-          <Touchable
-            background={Touchable.Ripple('#f0f0f0', false)}
+          <TouchableOpacity
             onPress={() => this.props.navigation.pop()}
             style={styles.cancelButton}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
-          </Touchable>
-          <Touchable
-            background={Touchable.Ripple(ACCENT_COLOR_DARK, false)}
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => {
               this.submitForm(this.state, () => this.props.navigation.pop());
             }}
             style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Submit</Text>
-          </Touchable>
+          </TouchableOpacity>
         </View>
         <KeyboardAwareFlatList
           innerRef={ref => {this.scroll = ref}}
@@ -567,7 +560,6 @@ export default class ScoutScreen extends React.Component {
   }
 }
 
-// TODO: Add box shadow for android (shadow props only support iOS)
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -584,11 +576,12 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 1,
     alignItems: 'center',
   },
   title: {
     fontFamily: 'open-sans-bold',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
     marginRight: 'auto',
   },
   cancelButton: {
@@ -601,7 +594,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontFamily: 'open-sans',
     color: '#a8a8a8',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
   },
   submitButton: {
     backgroundColor: ACCENT_COLOR,
@@ -613,22 +606,22 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontFamily: 'open-sans-bold',
     color: '#fff',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
   },
   cardTitle: {
     fontFamily: 'open-sans-bold',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
     marginLeft: 5,
     color: '#000',
   },
   cardText: {
     fontFamily: 'open-sans-bold',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
     color: '#fff',
   },
   cardTextSecondary: {
     fontFamily: 'open-sans',
-    fontSize: 15,
+    fontSize: 15 * FONT_MULTIPLIER,
     color: '#a8a8a8',
     marginLeft: 5
   },
@@ -659,7 +652,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     fontFamily: 'open-sans',
-    fontSize: 14,
+    fontSize: 14 * FONT_MULTIPLIER,
     margin: 5,
   },
   textInputMultiline: {
@@ -668,12 +661,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     fontFamily: 'open-sans',
-    fontSize: 14,
+    fontSize: 14 * FONT_MULTIPLIER,
     margin: 5,
   },
   errorMessage: {
     fontFamily: 'open-sans',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
     color: MINUS_ONE_COLOR,
     margin: 5,
   },

@@ -7,19 +7,19 @@ import {
   FlatList,
   Platform,
   AsyncStorage,
-  RefreshControl
+  RefreshControl,
+  TouchableOpacity
 } from "react-native";
 import { WebBrowser } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
 import CardNonTouchable from '../other/CardNonTouchable.js';
-import Touchable from 'react-native-platform-touchable';
 import { SafeAreaView } from 'react-navigation';
 import Table from '../other/Table.js';
 import Card from "../other/Card";
 import * as firebase from 'firebase';
 
 const ACCENT_COLOR = '#03b0ff';
-const ACCENT_COLOR_DARK = '#0374b2';
+const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -37,8 +37,8 @@ function sum(arr) {
 
 function goToSheet(teamNumber, regional) {
   return firebase.database().ref(teamNumber + '/' + regional).once('value').then((snapshot) => {
-    let spreadsheetId = snapshot.val().spreadsheetId;
-    if (spreadsheetId === undefined) createSheet(teamNumber, regional);
+    let spreadsheetId = (snapshot.val() !== null ? snapshot.val().spreadsheetId : null);
+    if (spreadsheetId === undefined || spreadsheetId === null) createSheet(teamNumber, regional);
     else openSheet(spreadsheetId);
   });
 }
@@ -47,7 +47,6 @@ function createSheet(teamNumber, regional) {
   fetch(`https://us-central1-scouting-app-5ec8f.cloudfunctions.net/createDataSheet?teamNumber=${teamNumber}&event=${regional}`,{
     method: 'GET',
   }).then((response) => {
-    console.log('Response from HTTP request:', response);
     WebBrowser.openBrowserAsync(response._bodyText());
   });
 }
@@ -71,7 +70,6 @@ const Statistics = (data) => {
       <Text style={styles.cardText}>Could not fetch statistics</Text>
     )
   }
-  console.log(component);
   return component;
 };
 
@@ -127,14 +125,15 @@ export default class EventScreen extends React.Component {
 
   _onRefresh = () => {
     this.setState({refreshing: true});
+    this.getScoutingData(this.state.teamNumber, this.state.event.name)
     this.getRankings().then(() => {
-      this.getScoutingData(this.state.teamNumber, this.state.event.name).then(() => this.setState({refreshing: false}));
+      this.setState({refreshing: false});
     });
   };
 
   GoogleSheet = (
     <View>
-      <Text style={{fontFamily: 'open-sans', fontSize: 14}}>
+      <Text style={{fontFamily: 'open-sans', fontSize: 14 * FONT_MULTIPLIER}}>
         <Text style={{fontFamily: 'open-sans-bold'}}>Click here</Text> to go to a Google Sheet containing your data.
         Don't worry about adding data as you go along. The sheet will automatically update when you scout matches.
       </Text>
@@ -212,28 +211,27 @@ export default class EventScreen extends React.Component {
 
     return (
       <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
-        <View style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02 }]}>
-          <Touchable background={Touchable.Ripple('#a0a0a0', false)}
-                     onPress={() => {
-                       this._removeItem('selectedEvent');
-                       this.props.navigation.pop()
-                     }}
-                     style={styles.backButton}>
+        <View style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02,
+          paddingTop: (Platform.OS !== 'ios' ? 25 : screenWidth * 0.02) }]}>
+          <TouchableOpacity onPress={() => {
+                              this._removeItem('selectedEvent');
+                              this.props.navigation.pop()
+                            }} style={styles.backButton}>
             <Ionicons name={
               Platform.OS === 'ios'
                 ? 'ios-arrow-back'
                 : 'md-arrow-back'
             } size={30} color='#000' />
-          </Touchable>
+          </TouchableOpacity>
           <Text style={styles.title}>{this.state.event.name}</Text>
-          <Touchable background={Touchable.Ripple(ACCENT_COLOR_DARK, true)}
-                     onPress={() => navigate('Scouting', {teamNumber: this.state.teamNumber, event: this.state.event})}
-                     style={[styles.scoutButton, {left: 55, width: screenWidth - 110}]}>
+          <TouchableOpacity onPress={() => navigate('Scouting', {teamNumber: this.state.teamNumber, event: this.state.event})}
+                            style={[styles.scoutButton, {left: 55, width: screenWidth - 110}]}>
             <Text style={styles.scoutButtonText}>Scout a match</Text>
-          </Touchable>
+          </TouchableOpacity>
         </View>
         <FlatList
-          style={styles.container}
+          contentContainerStyle={(Platform.OS !== "ios" ? styles.container : null)}
+          style={(Platform.OS === "ios" ? styles.container : null)}
           refreshControl={
             <RefreshControl
               refreshing={this.state.refreshing}
@@ -258,12 +256,12 @@ export default class EventScreen extends React.Component {
   }
 }
 
-// TODO: Add box shadow for android (shadow props only support iOS)
 const styles = StyleSheet.create({
   container: {
     paddingTop: 52.5,
     paddingHorizontal: 20,
     backgroundColor: '#f0f0f0',
+    flex: 1,
   },
   header: {
     zIndex: 999,
@@ -276,10 +274,11 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 10,
   },
   title: {
     fontFamily: 'open-sans-bold',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
     marginBottom: 35,
     marginLeft: 'auto',
     marginRight: 'auto',
@@ -300,25 +299,26 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 10,
     zIndex: 1000,
   },
   scoutButtonText: {
     textAlign: 'center',
     color: '#fff',
-    fontSize: 20,
+    fontSize: 20 * FONT_MULTIPLIER,
     fontFamily: 'open-sans-extra-bold',
   },
   cardTitle: {
     fontFamily: 'open-sans-bold',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
   },
   cardText: {
     fontFamily: 'open-sans',
-    fontSize: 16,
+    fontSize: 16 * FONT_MULTIPLIER,
   },
   backButton: {
     left: 25,
-    top: 5,
+    top: (Platform.OS !== "ios" ? 25 : 5),
     position: 'absolute'
   },
   row: {
@@ -335,6 +335,6 @@ const styles = StyleSheet.create({
   cellText: {
     fontFamily: 'open-sans',
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 14 * FONT_MULTIPLIER,
   },
 });
