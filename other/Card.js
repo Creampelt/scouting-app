@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -25,10 +25,10 @@ export default class Card extends React.Component {
 // TODO: Add box shadow for android (shadow props only support iOS)
 const styles = StyleSheet.create({
   cardContainer: {
-    width: '100%',
+    width: "100%",
     padding: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    shadowColor: "#000",
     shadowOffset: {
       width: -2,
       height: 2
@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   title: {
-    fontFamily: 'open-sans-bold',
+    fontFamily: "open-sans-bold",
     fontSize: 18 * FONT_MULTIPLIER,
     marginBottom: 5,
   },
   bold: {
-    fontFamily: 'open-sans-bold',
+    fontFamily: "open-sans-bold",
     fontSize: 14 * FONT_MULTIPLIER,
   }
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -9,16 +9,16 @@ import {
   Slider,
   TouchableOpacity,
 } from "react-native";
-import ReactNative from 'react-native';
-import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
+import ReactNative from "react-native";
+import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import CardNonTouchable from "../other/CardNonTouchable.js";
 import { SafeAreaView } from "react-navigation";
-import { CheckBox } from 'react-native-elements';
-import * as firebase from 'firebase';
+import { CheckBox } from "react-native-elements";
+import * as firebase from "firebase";
 
-const ACCENT_COLOR = '#03b0ff';
-const MINUS_ONE_COLOR = '#ff414c';
-const PLUS_ONE_COLOR = '#66ff64';
+const ACCENT_COLOR = "#03b0ff";
+const MINUS_ONE_COLOR = "#ff414c";
+const PLUS_ONE_COLOR = "#66ff64";
 const FONT_MULTIPLIER = (Platform.OS === "ios" ? 1 : 0.9);
 
 const PlusMinusMenu = ({ title, num, isHatch, handlers }) => {
@@ -28,7 +28,7 @@ const PlusMinusMenu = ({ title, num, isHatch, handlers }) => {
     if (typeof(num) === "object")
       stateNum = (isHatch ? num[`rocketHatchLevel${3 - i}`] : num[`rocketCargoLevel${3 - i}`]);
     return (
-      <View style={{flexDirection: 'row', marginBottom: 7}} key={i}>
+      <View style={{flexDirection: "row", marginBottom: 7}} key={i}>
         <TouchableOpacity
           onPress={() => handler(stateNum, false, isHatch)}
           style={styles.minusOne}>
@@ -60,8 +60,8 @@ const OptionsMenu = ({ options, handler }) => options.map((option, index) => (
   <CheckBox
     key={index}
     title={option.title}
-    checkedIcon='dot-circle-o'
-    uncheckedIcon='circle-o'
+    checkedIcon="dot-circle-o"
+    uncheckedIcon="circle-o"
     checked={option.checked}
     containerStyle={styles.checkBoxContainer}
     onPress={() => handler(option.goal)}
@@ -87,7 +87,7 @@ const TimerButton = ({ time, handler }) => {
 };
 
 function renderErrorMessage(renderError, team) {
-  if (renderError) return <Text style={styles.errorMessage}>Please enter a {(team ? 'team' : 'match')} number.</Text>;
+  if (renderError) return <Text style={styles.errorMessage}>Please enter a {(team ? "team" : "match")} number.</Text>;
   return null
 }
 
@@ -97,9 +97,9 @@ const PreMatch = ({ changeTeamNumber, startingLevel, startingPosHandler, renderT
     <View>
       <Text style={styles.cardTitle}>Match Number:</Text>
       <TextInput multiline={false}
-                 keyboardType='numeric'
+                 keyboardType="numeric"
                  style={styles.textInputSingleLine}
-                 placeholder='Match number here'
+                 placeholder="Match number here"
                  onChange={(text) => changeMatchNumber(text.nativeEvent.text)}
                  editable={true}
       />
@@ -108,9 +108,9 @@ const PreMatch = ({ changeTeamNumber, startingLevel, startingPosHandler, renderT
     <View>
       <Text style={styles.cardTitle}>Team Number:</Text>
       <TextInput multiline={false}
-                 keyboardType='numeric'
+                 keyboardType="numeric"
                  style={styles.textInputSingleLine}
-                 placeholder='Team number here'
+                 placeholder="Team number here"
                  onChange={(text) => changeTeamNumber(text.nativeEvent.text)}
                  editable={true}
       />
@@ -119,11 +119,11 @@ const PreMatch = ({ changeTeamNumber, startingLevel, startingPosHandler, renderT
     <View>
       <Text style={styles.cardTitle}>Starting Position</Text>
       <OptionsMenu options={[
-        {title: 'Level 1', checked: startingLevel === 1, goal: 1},
-        {title: 'Level 2', checked: startingLevel === 2, goal: 2}
+        {title: "Level 1", checked: startingLevel === 1, goal: 1},
+        {title: "Level 2", checked: startingLevel === 2, goal: 2}
       ]} handler={startingPosHandler} />
     </View>
-    <CheckBox title='Crossed hab line:'
+    <CheckBox title="Crossed hab line:"
               checked={crossedHabLine}
               containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
               textStyle={[styles.cardTitle, {marginLeft: 0, paddingLeft: 0}]}
@@ -153,18 +153,18 @@ const EndGame = ({ level, climbHandler, buddyClimb, buddyClimbHandler, time, tim
       <TimerButton time={time} handler={timerHandler} />
       <Text style={styles.cardTitle}>Hab Climb</Text>
       <OptionsMenu options={[
-        {title: 'None', checked: level === 0, goal: 0},
-        {title: 'Level 1', checked: level === 1, goal: 1},
-        {title: 'Level 2', checked: level === 2, goal: 2},
-        {title: 'Level 3', checked: level === 3, goal: 3},
+        {title: "None", checked: level === 0, goal: 0},
+        {title: "Level 1", checked: level === 1, goal: 1},
+        {title: "Level 2", checked: level === 2, goal: 2},
+        {title: "Level 3", checked: level === 3, goal: 3},
       ]} handler={climbHandler} />
     </View>
     <View>
       <Text style={styles.cardTitle}>Buddy Climb (Successful)</Text>
       <OptionsMenu options={[
-        {title: 'None', checked: buddyClimb === 0, goal: 0},
-        {title: '1 robot', checked: buddyClimb === 1, goal: 1},
-        {title: '2 robots', checked: buddyClimb === 2, goal: 2},
+        {title: "None", checked: buddyClimb === 0, goal: 0},
+        {title: "1 robot", checked: buddyClimb === 1, goal: 1},
+        {title: "2 robots", checked: buddyClimb === 2, goal: 2},
       ]} handler={buddyClimbHandler} />
     </View>
   </View>
@@ -172,7 +172,7 @@ const EndGame = ({ level, climbHandler, buddyClimb, buddyClimbHandler, time, tim
 
 const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
   <View>
-    <CheckBox title='Robot broke down:'
+    <CheckBox title="Robot broke down:"
               checked={brokeDown}
               containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
               textStyle={[styles.cardTitle, {marginLeft: 0, paddingLeft: 0}]}
@@ -183,7 +183,7 @@ const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
       <Text style={styles.cardTitle}>Comments:</Text>
       <TextInput multiline={true}
                  style={styles.textInputMultiline}
-                 placeholder='Enter comments here'
+                 placeholder="Enter comments here"
                  onChange={(text) => changeText(text.nativeEvent.text)}
                  onFocus={(event) => scroll(ReactNative.findNodeHandle(event.target))}
                  editable={true}
@@ -194,7 +194,7 @@ const PostMatch = ({ brokeDown, brokeDownHandler, changeText, scroll }) => (
 
 const Defense = ({ max, min, sliderHandler, checkedHandler, playedDefense, effectiveness }) => (
   <View>
-    <CheckBox title='Robot played defense:'
+    <CheckBox title="Robot played defense:"
               checked={playedDefense}
               containerStyle={[styles.checkBoxContainer, {marginLeft: 0, paddingLeft: 0}]}
               textStyle={[styles.cardTitle, {marginLeft: 0, paddingLeft: 0}]}
@@ -214,7 +214,7 @@ const Defense = ({ max, min, sliderHandler, checkedHandler, playedDefense, effec
 function removeInstances(str, chars) {
   for (let char in chars) {
     if (chars.hasOwnProperty(char)) {
-      str = str.replace(chars[char], '');
+      str = str.replace(chars[char], "");
     }
   }
   return str;
@@ -261,12 +261,12 @@ export default class ScoutScreen extends React.Component {
       },
       postgame: {
         robotBrokeDown: false,
-        comments: '',
+        comments: "",
       },
       renderTeamError: false,
       renderMatchError: false,
-      teamNumber: this.props.navigation.getParam('teamNumber', ''),
-      event: this.props.navigation.getParam('event', null),
+      teamNumber: this.props.navigation.getParam("teamNumber", ""),
+      event: this.props.navigation.getParam("event", null),
     };
     this.cargoShipHandler = this.cargoShipHandler.bind(this);
     this.rocketLvl1 = this.rocketLvl1.bind(this);
@@ -457,7 +457,7 @@ export default class ScoutScreen extends React.Component {
   submitForm(rawData, handler) {
     let data = {};
     let teamNumber = rawData.pregame.teamNumber;
-    let exclude = ['renderTeamError', 'renderMatchError', 'teamNumber', 'event'];
+    let exclude = ["renderTeamError", "renderMatchError", "teamNumber", "event"];
     let error = false;
 
     if (rawData.pregame.teamNumber === null) {
@@ -477,34 +477,33 @@ export default class ScoutScreen extends React.Component {
         data[section] = rawData[section];
     }
 
-    let url = this.state.teamNumber + '/' + this.state.event.name + '/matchData/' + teamNumber + '/' + this.state.pregame.matchNumber;
+    let url = this.state.teamNumber + "/" + this.state.event.name + "/matchData/" + teamNumber + "/" + this.state.pregame.matchNumber;
     firebase.database().ref(url).set(data);
     this.setState({renderError: false});
     handler();
   }
 
   render() {
-    const screenWidth = Dimensions.get('window').width;
-    let keyboardDismissMode;
-    if (Platform.OS === 'ios') keyboardDismissMode = 'interactive';
-    else keyboardDismissMode = 'on-drag';
+    const screenWidth = Dimensions.get("window").width;
+    const keyboardDismissMode = Platform.OS === "ios" ? "interactive" : "on-drag";
+    const ellipsizeMode = "tail";
 
     return (
-      <SafeAreaView style={{flex: 1}} forceInset={{bottom: 'never'}}>
+      <SafeAreaView style={{flex: 1}} forceInset={{bottom: "never"}}>
         <View
           style={[styles.header, { width: screenWidth, padding: screenWidth * 0.02, paddingHorizontal: 25 }]}>
           <Text style={styles.title}>Scout a Match</Text>
           <TouchableOpacity
             onPress={() => this.props.navigation.pop()}
             style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text numberOfLines={1} style={styles.cancelButtonText} ellipsizeMode={ellipsizeMode}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               this.submitForm(this.state, () => this.props.navigation.pop());
             }}
             style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Submit</Text>
+            <Text numberOfLines={1} style={styles.submitButtonText} ellipsizeMode={ellipsizeMode}>Submit</Text>
           </TouchableOpacity>
         </View>
         <KeyboardAwareFlatList
@@ -514,9 +513,9 @@ export default class ScoutScreen extends React.Component {
           extraHeight={150}
           style={styles.container}
           keyboardDismissMode={keyboardDismissMode}
-          keyboardShouldPersistTaps='always'
+          keyboardShouldPersistTaps="always"
           data={[
-            {key: 'Pre-Match/Sandstorm', content: (<PreMatch startingLevel={this.state.pregame.startingLevel}
+            {key: "Pre-Match/Sandstorm", content: (<PreMatch startingLevel={this.state.pregame.startingLevel}
                                                              startingPosHandler={this.startingPosHandler}
                                                              renderMatchError={this.state.renderMatchError}
                                                              renderTeamError={this.state.renderTeamError}
@@ -525,33 +524,32 @@ export default class ScoutScreen extends React.Component {
                                                              changeMatchNumber={this.changeMatchNumberText}
                                                              changeTeamNumber={this.changeTeamNumberText} />)
             },
-            {key: 'Cargo Ship', content: (<CargoShip hatch={this.state.cargoShip.cargoShipHatch}
+            {key: "Cargo Ship", content: (<CargoShip hatch={this.state.cargoShip.cargoShipHatch}
                                                     cargo={this.state.cargoShip.cargoShipCargo}
                                                     handler={[this.cargoShipHandler]} />)
             },
-            {key: 'Rocket', content: (<Rocket hatch={this.state.rocket.hatch}
+            {key: "Rocket", content: (<Rocket hatch={this.state.rocket.hatch}
                                               cargo={this.state.rocket.cargo}
                                               handlers={[this.rocketLvl3, this.rocketLvl2, this.rocketLvl1]} />)
             },
-            {key: 'Defense', content: (<Defense checkedHandler={this.playedDefenseHandler}
+            {key: "Defense", content: (<Defense checkedHandler={this.playedDefenseHandler}
                                                 sliderHandler={this.effectivenessHandler}
                                                 playedDefense={this.state.defense.playedDefense}
                                                 effectiveness={this.state.defense.defenseEffectiveness}
                                                 min={0}
                                                 max={10} />)},
-            {key: 'End Game', content: (<EndGame level={this.state.endgame.habClimb}
+            {key: "End Game", content: (<EndGame level={this.state.endgame.habClimb}
                                                  climbHandler={this.climbHandler}
                                                  time={this.state.endgame.climbDuration}
                                                  timerHandler={this.timerHandler}
                                                  buddyClimb={this.state.endgame.buddyClimb}
                                                  buddyClimbHandler={this.buddyClimbHandler} />)
             },
-            {key: 'Post Match', content: (<PostMatch brokeDown={this.state.postgame.robotBrokeDown}
+            {key: "Post Match", content: (<PostMatch brokeDown={this.state.postgame.robotBrokeDown}
                                                      brokeDownHandler={this.brokeDownHandler}
                                                      scroll={this.scrollToInput}
                                                      changeText={this.changePostgameText} />)
-            },
-            {key: '', content: (<View />), style: {opacity: 0}}
+            }
           ]}
           renderItem={({item}) => <CardNonTouchable title={item.key} content={item.content} style={item.style} handler={item.handler}/>}
         />
@@ -563,13 +561,13 @@ export default class ScoutScreen extends React.Component {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   header: {
     zIndex: 999,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 5
@@ -577,23 +575,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
-    fontFamily: 'open-sans-bold',
+    fontFamily: "open-sans-bold",
     fontSize: 20 * FONT_MULTIPLIER,
-    marginRight: 'auto',
+    marginRight: "auto",
   },
   cancelButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     flex: -1,
     padding: 10,
     paddingHorizontal: 15,
     marginLeft: 3
   },
   cancelButtonText: {
-    fontFamily: 'open-sans',
-    color: '#a8a8a8',
+    fontFamily: "open-sans",
+    color: "#a8a8a8",
     fontSize: 20 * FONT_MULTIPLIER,
   },
   submitButton: {
@@ -604,31 +602,31 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   submitButtonText: {
-    fontFamily: 'open-sans-bold',
-    color: '#fff',
+    fontFamily: "open-sans-bold",
+    color: "#fff",
     fontSize: 20 * FONT_MULTIPLIER,
   },
   cardTitle: {
-    fontFamily: 'open-sans-bold',
+    fontFamily: "open-sans-bold",
     fontSize: 16 * FONT_MULTIPLIER,
     marginLeft: 5,
-    color: '#000',
+    color: "#000",
   },
   cardText: {
-    fontFamily: 'open-sans-bold',
+    fontFamily: "open-sans-bold",
     fontSize: 16 * FONT_MULTIPLIER,
-    color: '#fff',
+    color: "#fff",
   },
   cardTextSecondary: {
-    fontFamily: 'open-sans',
+    fontFamily: "open-sans",
     fontSize: 15 * FONT_MULTIPLIER,
-    color: '#a8a8a8',
+    color: "#a8a8a8",
     marginLeft: 5
   },
   minusOne: {
     flex: 1,
     backgroundColor: MINUS_ONE_COLOR,
-    alignItems: 'center',
+    alignItems: "center",
     padding: 10,
     marginHorizontal: 5,
     borderRadius: 5
@@ -636,36 +634,36 @@ const styles = StyleSheet.create({
   plusOne: {
     flex: 1,
     backgroundColor: PLUS_ONE_COLOR,
-    alignItems: 'center',
+    alignItems: "center",
     padding: 10,
     marginHorizontal: 5,
     borderRadius: 5,
   },
   checkBoxContainer: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
+    backgroundColor: "transparent",
+    borderColor: "transparent",
     margin: 0,
     padding: 5,
   },
   textInputSingleLine: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     padding: 10,
     borderRadius: 5,
-    fontFamily: 'open-sans',
+    fontFamily: "open-sans",
     fontSize: 14 * FONT_MULTIPLIER,
     margin: 5,
   },
   textInputMultiline: {
     minHeight: 75,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     padding: 10,
     borderRadius: 5,
-    fontFamily: 'open-sans',
+    fontFamily: "open-sans",
     fontSize: 14 * FONT_MULTIPLIER,
     margin: 5,
   },
   errorMessage: {
-    fontFamily: 'open-sans',
+    fontFamily: "open-sans",
     fontSize: 16 * FONT_MULTIPLIER,
     color: MINUS_ONE_COLOR,
     margin: 5,
@@ -673,7 +671,7 @@ const styles = StyleSheet.create({
   timerButton: {
     flex: 1,
     backgroundColor: ACCENT_COLOR,
-    alignItems: 'center',
+    alignItems: "center",
     padding: 10,
     marginHorizontal: 5,
     borderRadius: 5

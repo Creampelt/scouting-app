@@ -13,6 +13,7 @@ import {
 import {NavigationActions, SafeAreaView, StackActions} from 'react-navigation';
 
 const ACCENT_COLOR = '#03b0ff';
+const XR_SCREEN_WIDTH = 414;
 
 function renderErrorMessage(renderError) {
   if (renderError) return <Text style={styles.errorMessage}>Please enter a valid team number.</Text>;

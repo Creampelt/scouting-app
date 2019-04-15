@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 import {
   createAppContainer,
   createStackNavigator
-} from 'react-navigation';
+} from "react-navigation";
 
 import EventScreen from "../screens/EventScreen";
 import HomeScreen from "../screens/HomeScreen";

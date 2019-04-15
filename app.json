@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Scouting App",
+    "name": "Missfits Scouting App",
     "slug": "scouting-app",
     "privacy": "public",
     "sdkVersion": "32.0.0",
@@ -8,9 +8,10 @@
       "ios",
       "android"
     ],
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/iconAndroid.png",
+    "primaryColor": "#03b0ff",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -23,7 +24,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.missfitsrobotics.missfitsscouting",
+      "icon": "./assets/images/iconAppStore.png"
+    },
+    "android": {
+      "package": "com.missfitsrobotics.missfitsscouting",
+      "versionCode": 2,
+      "icon": "./assets/images/iconAndroid.png",
+      "permissions": []
     }
   }
 }
